@@ -2,26 +2,24 @@ import csv
 import os
 
 my_path = os.path.abspath(os.path.dirname(__file__))
-SIGNS_FILE = os.path.join(my_path, 'signs.csv')
 
 class SignTranslator:
     def __init__(self):
-        self.signs = self.parseCSVFile(SIGNS_FILE)
+        self.signs = self.parseTXTFile("models/labels.txt")
 
-    def parseCSVFile(self, filename, parse_numbers = False):
+    def parseTXTFile(self, filename):
         '''
-        Parses a CSV file located in te config directory and returns its contents as a dictionary.
+        Parses a TXT file located in te config directory and returns its contents as a dictionary.
 
         @param filename: The name of the csv file to parse.
 
         @return the contents of the parsed file.
         '''
-        result = {}
-        with open(filename) as csvfile:
-            reader = csv.reader(csvfile, delimiter=",")
-            for row in reader:
-                result[row[0]] = row[1] if not parse_numbers else float(row[1])
-        return result
+        list_labels = []
+        with open(filename, 'r') as f:
+            for line in f:
+                list_labels.append(line)
+        return list_labels
     
     def get_sign(self, s):
         '''
@@ -31,4 +29,4 @@ class SignTranslator:
 
         @return the sign name
         '''
-        return self.signs[str(s)]
+        return self.signs[s]

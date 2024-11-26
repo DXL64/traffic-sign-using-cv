@@ -10,28 +10,28 @@ class SignDetector:
     ret_tri, thresh_tri = cv2.threshold(triangle, 127, 255, 0)
     contours_tri, hierarchy_tri = cv2.findContours(thresh_tri, 2, 1)
     tri_shape = contours_tri[1]
-    tri_thresh = 0.1
+    tri_thresh = 0.2
 
     # Get Circle Stuff
     circle = cv2.imread(os.path.join(my_path,'./shapes/circle.png'), cv2.IMREAD_GRAYSCALE)
     ret_cir, thresh_cir = cv2.threshold(circle, 127, 255, 0)
     contours_cir, hierarchy_cir = cv2.findContours(thresh_cir, 2, 1)
     cir_shape = contours_cir[1]
-    cir_thresh = 0.1
+    cir_thresh = 0.2
 
     # Get Square Stuff
     square = cv2.imread(os.path.join(my_path,'./shapes/square.png'), cv2.IMREAD_GRAYSCALE)
     ret_sqr, thresh_sqr = cv2.threshold(square, 127, 255, 0)
     contours_sqr, hierarchy_sqr = cv2.findContours(thresh_sqr, 2, 1)
     sqr_shape = contours_sqr[1]
-    sqr_thresh = 0.1
+    sqr_thresh = 0.2
 
     # Get Hexagon Stuff
     hexa = cv2.imread(os.path.join(my_path,'./shapes/hexagon.png'), cv2.IMREAD_GRAYSCALE)
     ret_hex, thresh_hex = cv2.threshold(hexa, 127, 255, 0)
     contours_hex, hierarchy_hex = cv2.findContours(thresh_hex, 2, 1)
     hex_shape = contours_hex[1]
-    hex_thresh = 0.1
+    hex_thresh = 0.2
 
 
     def find_signs(self, img):

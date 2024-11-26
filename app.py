@@ -19,16 +19,11 @@ def load_image_from_url(url):
         st.error(f"Error loading image: {e}")
         return None
 
-def run(args):
-    model_dir = f"models/{args.model_name}"
-    model_path = os.path.join(model_dir, 'best_model.h5')
+def run():
+    model_dir = "models"
     
     print("----------- Starting Streamlit App -----------")
     st.title("Traffic Sign Recognition App")
-    
-    # Load the model
-    print(f"Loading model from {model_path}...")
-    model = tf.keras.models.load_model(model_path)
     
     list_labels = []
     with open(os.path.join(model_dir, 'labels.txt'), 'r') as f:
@@ -46,30 +41,29 @@ def run(args):
             # Read the uploaded image file in OpenCV format
             file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
             image_tmp = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            if image_tmp is not None:
-                image = cv2.resize(image_tmp, (30, 30), interpolation=cv2.INTER_NEAREST)
-                st.image(cv2.cvtColor(image_tmp, cv2.COLOR_BGR2RGB), caption='Uploaded Image', use_container_width=True)
+            image = image_tmp
     
     elif option == 'Enter Image URL':
         image_url = st.text_input("Enter the image URL here:")
         if image_url:
             image_tmp = load_image_from_url(image_url)
-            if image_tmp is not None:
-                image = cv2.resize(image_tmp, (30, 30), interpolation=cv2.INTER_NEAREST)
-                st.image(cv2.cvtColor(image_tmp, cv2.COLOR_BGR2RGB), caption='Image from URL', use_container_width=True)
+            image = image_tmp
     
     # Predict if an image was loaded
     if image is not None:
         # Preprocess the image
-        top_choice, top_choice_list = process_image(image)
-        st.write(f"Predicted Class: {top_choice}")
-        st.write(f"Predicted Label: {list_labels[top_choice]}")
-        st.write(f"Predicted Score: {top_choice_list[top_choice]}")
+        top_choice, top_choice_list, image = process_image(image)
+        
+        st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), caption='Image from URL', use_column_width=True)
+
+        for i in range(len(top_choice)):
+            st.write(f"Predicted Class: {top_choice[i]}")
+            st.write(f"Predicted Label: {list_labels[top_choice[i]]}")
+            st.write(f"Neural Network Predicted Labels: {list_labels[top_choice_list[i][0]]}")
+            st.write(f"Template Matching Predicted Labels: {list_labels[top_choice_list[i][1]]}")
+            st.write(f"Sift Matching Predicted Labels: {list_labels[top_choice_list[i][2]]}")
     
     print("----------- Streamlit App Running -----------")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Streamlit App for Traffic Sign Recognition")
-    parser.add_argument('--model_name', type=str, default='vn', help='Path of the trained model')
-    args = parser.parse_args()
-    run(args)
+    run()

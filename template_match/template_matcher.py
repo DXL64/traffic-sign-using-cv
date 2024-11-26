@@ -3,7 +3,7 @@ import cv2
 import os.path
 import numpy as np
 
-NUM_TEMPLATES = 43
+NUM_TEMPLATES = 120
 
 
 class TemplateMatcher:
@@ -13,7 +13,7 @@ class TemplateMatcher:
 
     for i in range(NUM_TEMPLATES):
         templates.append(
-            cv2.cvtColor(cv2.imread(os.path.join(my_path, './templates/' + str(i) + '.png')), cv2.COLOR_BGR2GRAY))
+            cv2.cvtColor(cv2.imread(os.path.join(my_path, './templates/' + str(i) + '.jpg')), cv2.COLOR_BGR2GRAY))
 
     def template_match(self, img, guesses = []):
         '''

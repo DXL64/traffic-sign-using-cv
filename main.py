@@ -24,17 +24,24 @@ def process_image(image, methods=["nn", "tm", "sift"]):
 
     @return the results of the sign detection.
     '''
-    random.seed(datetime.now().timestamp())
 
     signs = SignDetector().find_signs(image.copy())
 
     translator = SignTranslator()
 
-    results = dict()
+    results = []
 
+    list_a = []
+    list_b = []
+    if len(signs) == 0:
+        top_choice, top_choice_list = match(image, methods)
+        print(translator.get_sign(top_choice.mode))
+
+        if top_choice.count != 0:
+            list_a.append(top_choice.mode)
+            list_b.append(top_choice_list)
     for sign in signs:
         top_choice, top_choice_list = match(sign[0], methods)
-
 
         if top_choice.count != 0:
             sign_details = dict()
@@ -43,14 +50,20 @@ def process_image(image, methods=["nn", "tm", "sift"]):
             sign_details["w"] = sign[1][2]
             sign_details["h"] = sign[1][3]
 
-            results[translator.get_sign(top_choice.mode)] = sign_details
+            results.append(sign_details)
+            list_a.append(top_choice.mode)
+            list_b.append(top_choice_list)
 
-    for r in results.keys():
-        sign = results[r]
-        cv2.rectangle(image, (sign["x"], sign["y"]), (sign["x"] + sign["w"], sign["y"] + sign["h"]), (0, 255, 0), 2)
-        cv2.putText(image, r, (sign["x"], sign["y"]), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-
-    return top_choice_list, results
+    for idx, result in enumerate(results):
+        r = translator.get_sign(list_a[idx])
+        print(r)
+        sign = result
+        if len(results):
+            cv2.rectangle(image, (sign["x"], sign["y"]), (sign["x"] + sign["w"], sign["y"] + sign["h"]), (0, 255, 0), 2)
+            cv2.putText(image, r, (sign["x"], sign["y"]), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    
+    cv2.imwrite("results/output.jpg", image)
+    return list_a, list_b, image
 
 
 def match(sign, methods):
@@ -139,7 +152,5 @@ def sift_match(sign, guesses=[]):
 
 
 if __name__ == '__main__':
-    image = cv2.imread(INPUT_DIR + "test2.jpeg")
-    top_choice, top_choice_list = process_image(image)
-    print(top_choice)
-    print(top_choice_list)
+    image = cv2.imread(INPUT_DIR + "2bien.jpg")
+    top_choice, top_choice_list, result_image = process_image(image)
