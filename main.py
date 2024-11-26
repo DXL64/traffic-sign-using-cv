@@ -4,6 +4,8 @@ from datetime import datetime
 from scipy.stats import mode
 import os
 import json
+import tensorflow as tf
+import numpy as np
 
 from sign_detection.sign_detector import SignDetector
 from neural_network.src.recognize_image import Recog
@@ -34,7 +36,8 @@ def process_image(input_file, output_file="", download=True, methods=["nn", "tm"
     results = dict()
 
     for sign in signs:
-        top_choice, _ = match(sign[0], methods, sign[2])
+        top_choice, _ = match(sign[0], methods)
+
 
         if top_choice.count != 0:
             sign_details = dict()
@@ -64,36 +67,34 @@ def process_image(input_file, output_file="", download=True, methods=["nn", "tm"
         output_file = output_dir + "/" + output_file + ".json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=4)
+
+        # print(results)
     else:
         output_image = ""
     return output_image, results
 
 
-def match(sign, methods, shapes = []):
+def match(sign, methods):
     test_results = []
     guesses = []
 
-    if shapes == []:
-        shapes = ["TRIANGLE", "CIRCLE", "SQUARE", "HEXAGON"]
 
     if "nn" in methods:
-        res, guesses = nn_match(sign, shapes)
+        res, guesses = nn_match(sign)
         test_results.append(res)
 
     if "tm" in methods:
-        test_results.append(template_match(sign, guesses, shapes))
+        test_results.append(template_match(sign, guesses))
 
     if "sift" in methods:
-        test_results.append(sift_match(sign, guesses, shapes))
+        test_results.append(sift_match(sign, guesses))
 
     top_choice = mode(test_results)
-
-    print(test_results)
 
     return top_choice, test_results
 
 
-def nn_match(sign, shapes = []):
+def nn_match(sign):
     '''
     Uses the neual network to perform a detection on the sign.
 
@@ -101,22 +102,29 @@ def nn_match(sign, shapes = []):
 
     @returns the top detection.
     '''
+    model_path = os.path.join('models', 'best_model.h5')
+    print(f"Loading model from {model_path}...")
+    model = tf.keras.models.load_model(model_path)
 
-    translator = SignTranslator()
+    image = cv2.resize(sign, (30, 30), interpolation=cv2.INTER_NEAREST)
+    image_array = np.array(image) / 1.0  # Normalize to [0, 1]
+    image_array = np.expand_dims(image_array, axis=0)
+    
+    # Predict the class
+    prediction = model.predict(image_array)
+    
+    # Get top 5 predictions with their probabilities
+    top_indices = np.argsort(prediction[0])[-5:][::-1]  # Get indices of top 5 predictions
+    top_probabilities = prediction[0][top_indices]     # Get corresponding probabilities
 
-    top_recogs = Recog().recog_image(sign)
-    new_top_recogs = []
-    for recogs in top_recogs:
-        if translator.get_shape(recogs[1]) in shapes:
-            new_top_recogs.append(recogs)
-
-    if len(new_top_recogs) > 0:
-        return new_top_recogs[0][1], new_top_recogs
-
+    # Create list of tuples with (class_index, probability)
+    top_recogs = [(float(prob), int(idx)) for idx, prob in zip(top_indices, top_probabilities)]
+    if len(top_recogs) > 0:
+        return top_recogs[0][1], top_recogs
     return -1, []
 
 
-def template_match(sign, guesses=[], shapes = []):
+def template_match(sign, guesses=[]):
     '''
     Uses the template matching to perform a detection on the sign.
 
@@ -127,14 +135,14 @@ def template_match(sign, guesses=[], shapes = []):
     if sign.shape[2] == 3:  # Check if the image is not already grayscale
         sign = cv2.cvtColor(sign, cv2.COLOR_BGR2GRAY)
 
-    top_recogs = TemplateMatcher().template_match(sign, guesses, shapes)
+    top_recogs = TemplateMatcher().template_match(sign, guesses)
     if len(top_recogs) > 0:
         return top_recogs[0][1]
 
     return -1
 
 
-def sift_match(sign, guesses=[], shapes = []):
+def sift_match(sign, guesses=[]):
     '''
     Uses the sift matching to perform a detection on the sign.
 
@@ -144,7 +152,7 @@ def sift_match(sign, guesses=[], shapes = []):
     '''
     sign = cv2.cvtColor(sign, cv2.COLOR_BGR2GRAY)
 
-    top_recogs = TemplateMatcher().sift_match(sign, guesses, shapes)
+    top_recogs = TemplateMatcher().sift_match(sign, guesses)
     if len(top_recogs) > 0:
         return top_recogs[0][1]
 
@@ -152,4 +160,4 @@ def sift_match(sign, guesses=[], shapes = []):
 
 
 if __name__ == '__main__':
-    process_image(INPUT_DIR + "stop.jpg", "result")
+    process_image(INPUT_DIR + "test2.jpeg", "result")

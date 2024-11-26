@@ -2,7 +2,6 @@ import albumentations
 import cv2
 import os.path
 import numpy as np
-from sign_translation.sign_translator import SignTranslator
 
 NUM_TEMPLATES = 43
 
@@ -12,13 +11,11 @@ class TemplateMatcher:
 
     templates = []
 
-    translator = SignTranslator()
-
     for i in range(NUM_TEMPLATES):
         templates.append(
             cv2.cvtColor(cv2.imread(os.path.join(my_path, './templates/' + str(i) + '.png')), cv2.COLOR_BGR2GRAY))
 
-    def template_match(self, img, guesses = [], shapes = []):
+    def template_match(self, img, guesses = []):
         '''
         Performs template matching on the image with a given set of templates.
 
@@ -36,14 +33,8 @@ class TemplateMatcher:
         ])
 
         # If nothing provided try all of them.
-        if shapes == []:
-            shapes = ["TRIANGLE", "CIRCLE", "SQUARE", "HEXAGON"]
-
-        # If nothing provided try all of them.
         if guesses == []:
-            for i in range(1, NUM_TEMPLATES + 1):
-                if self.translator.get_shape(i) in shapes:
-                    guesses.append(-1, i)
+            guesses = [(-1, i) for i in range(1, NUM_TEMPLATES + 1)]
 
         result = []
 
@@ -60,7 +51,7 @@ class TemplateMatcher:
 
         return sorted(result, key=lambda x: x[0], reverse=True)
 
-    def sift_match(self, img, guesses = [], shapes = []):
+    def sift_match(self, img, guesses = []):
         '''
         Performs sift matching on the image with a given set of templates.
 
@@ -81,14 +72,9 @@ class TemplateMatcher:
         # BFMatcher with default params
         bf = cv2.BFMatcher()
 
-        if shapes == []:
-            shapes = ["TRIANGLE", "CIRCLE", "SQUARE", "HEXAGON"]
-
         # If nothing provided try all of them.
         if guesses == []:
-            for i in range(1, NUM_TEMPLATES + 1):
-                if self.translator.get_shape(i) in shapes:
-                    guesses.append(-1, i)
+            guesses = [(-1, i) for i in range(1, NUM_TEMPLATES + 1)]
             
         result = []
 

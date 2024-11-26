@@ -40,7 +40,6 @@ class SignDetector:
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         new_contours = []
         rectangles = []
-        shapes = []
         im2 = img.copy()
 
         for c in contours:
@@ -52,19 +51,6 @@ class SignDetector:
                     match_circle = cv2.matchShapes(c, self.cir_shape, 1, 0.0)
                     match_square = cv2.matchShapes(c, self.sqr_shape, 1, 0.0)
                     match_hexagon = cv2.matchShapes(c, self.hex_shape, 1, 0.0)
-
-                    min_thres = match_triangle
-                    shape = "TRIANGLE"
-                    if min_thres > match_circle: 
-                        shape = "CIRCLE"
-                        min_thres = match_circle
-                    if min_thres > match_square: 
-                        shape = "SQUARE"
-                        min_thres = match_square
-                    if min_thres > match_hexagon:
-                        shape = "HEXAGON"
-                        min_thres = match_hexagon
-
                     matches = []
                     if match_triangle < self.tri_thresh:
                         matches += ['triangle: ' + str(match_triangle)]
@@ -87,15 +73,16 @@ class SignDetector:
 
                         if not found_same:
                             rectangles += [(x, y, w, h)]
-                            shapes += [shape]
+                            # print(str((x, y, w, h)) + ' from ' + str(matches))
 
         returned_images = []
-        for rec, shape in zip(rectangles, shapes):
+        for rec in rectangles:
+
             x_bot = int(max(0, rec[1] - rec[3] / 20))
             x_far = int(min(img.shape[0], rec[1] + (1.05 * rec[3])))
             y_bot = int(max(0, rec[0] - rec[2] / 20))
             y_far = int(min(img.shape[1], rec[0] + (1.05 * rec[2])))
-            returned_images += [(img[x_bot:x_far, y_bot:y_far], rec, shape)]
+            returned_images += [(img[x_bot:x_far, y_bot:y_far], rec)]
 
         return returned_images
     
