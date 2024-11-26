@@ -16,18 +16,15 @@ INPUT_DIR = "inputs/"
 OUTPUT_DIR = "results/"
 
 
-def process_image(input_file, output_file="", download=True, methods=["nn", "tm", "sift"]):
+def process_image(image, methods=["nn", "tm", "sift"]):
     '''
     Processes the input image to find the sign.
 
     @param input_file: the name of the input image.
-    @param output_file: the name of the output image.
 
-    @return the file name for the output image.
+    @return the results of the sign detection.
     '''
     random.seed(datetime.now().timestamp())
-
-    image = cv2.imread(input_file)
 
     signs = SignDetector().find_signs(image.copy())
 
@@ -36,7 +33,7 @@ def process_image(input_file, output_file="", download=True, methods=["nn", "tm"
     results = dict()
 
     for sign in signs:
-        top_choice, _ = match(sign[0], methods)
+        top_choice, top_choice_list = match(sign[0], methods)
 
 
         if top_choice.count != 0:
@@ -53,25 +50,7 @@ def process_image(input_file, output_file="", download=True, methods=["nn", "tm"
         cv2.rectangle(image, (sign["x"], sign["y"]), (sign["x"] + sign["w"], sign["y"] + sign["h"]), (0, 255, 0), 2)
         cv2.putText(image, r, (sign["x"], sign["y"]), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
-    if download:
-        if output_file == "":
-            output_file = "processed_signs_" + str(random.randint(1, 1000))
-
-        output_dir = OUTPUT_DIR + output_file
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
-
-        output_image = output_dir + "/" + output_file + ".png"
-        cv2.imwrite(output_image, image)
-
-        output_file = output_dir + "/" + output_file + ".json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=4)
-
-        # print(results)
-    else:
-        output_image = ""
-    return output_image, results
+    return top_choice_list, results
 
 
 def match(sign, methods):
@@ -160,4 +139,7 @@ def sift_match(sign, guesses=[]):
 
 
 if __name__ == '__main__':
-    process_image(INPUT_DIR + "test2.jpeg", "result")
+    image = cv2.imread(INPUT_DIR + "test2.jpeg")
+    top_choice, top_choice_list = process_image(image)
+    print(top_choice)
+    print(top_choice_list)
