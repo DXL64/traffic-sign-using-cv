@@ -23,45 +23,54 @@ def run():
     model_dir = "models"
     
     print("----------- Starting Streamlit App -----------")
-    st.title("Traffic Sign Recognition App")
+    st.title("Ứng dụng nhận diện biển báo giao thông")
     
     list_labels = []
     with open(os.path.join(model_dir, 'labels.txt'), 'r') as f:
         for line in f:
             list_labels.append(line)
 
-    # Option to upload an image file or provide a URL
-    st.write("Choose an option to provide a traffic sign image:")
-    option = st.radio("Input Method", ('Upload Image', 'Enter Image URL'))
+    # Option to upload an image file, provide a URL, or capture with camera
+    st.write("Lựa chọn 1 phương thức để nhập ảnh đầu vào:")
+    option = st.radio("Chọn đầu vào", ('Tải ảnh biển báo', 'Nhập đường dẫn URL', 'Sử dụng webcam'))
 
     image = None
-    if option == 'Upload Image':
-        uploaded_file = st.file_uploader("Upload a traffic sign image...", type=["jpg", "png", "jpeg"])
+    if option == 'Tải ảnh biển báo':
+        uploaded_file = st.file_uploader("Tải ảnh biển báo", type=["jpg", "png", "jpeg"])
         if uploaded_file is not None:
             # Read the uploaded image file in OpenCV format
             file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
             image_tmp = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
             image = image_tmp
     
-    elif option == 'Enter Image URL':
-        image_url = st.text_input("Enter the image URL here:")
+    elif option == 'Nhập đường dẫn URL':
+        image_url = st.text_input("Nhập đường dẫn URL vào đây:")
         if image_url:
             image_tmp = load_image_from_url(image_url)
+            image = image_tmp
+    
+    elif option == 'Sử dụng webcam':
+        image_file = st.camera_input("Chụp ảnh từ webcam")
+        if image_file is not None:
+            # Convert the captured image to an OpenCV format
+            image_bytes = np.asarray(bytearray(image_file.getvalue()), dtype=np.uint8)
+            image_tmp = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
             image = image_tmp
     
     # Predict if an image was loaded
     if image is not None:
         # Preprocess the image
-        top_choice, top_choice_list, image = process_image(image)
+        top_choice, top_choice_list, score, image = process_image(image)
         
-        st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), caption='Image from URL', use_column_width=True)
+        st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), caption='Ảnh biển báo giao thông', use_column_width=True)
 
         for i in range(len(top_choice)):
-            st.write(f"Predicted Class: {top_choice[i]}")
-            st.write(f"Predicted Label: {list_labels[top_choice[i]]}")
-            st.write(f"Neural Network Predicted Labels: {list_labels[top_choice_list[i][0]]}")
-            st.write(f"Template Matching Predicted Labels: {list_labels[top_choice_list[i][1]]}")
-            st.write(f"Sift Matching Predicted Labels: {list_labels[top_choice_list[i][2]]}")
+            st.write(f"Dự đoán lớp: {top_choice[i]}")
+            st.write(f"Dự đoán nhãn: {list_labels[top_choice[i]]}")
+            st.write(f"Độ tin cậy: {score}")
+            st.write(f"Nhãn từ mạng Neural: {list_labels[top_choice_list[i][0]]}")
+            st.write(f"Nhãn từ Template Matching: {list_labels[top_choice_list[i][1]]}")
+            st.write(f"Nhãn từ Sift Matching: {list_labels[top_choice_list[i][2]]}")
     
     print("----------- Streamlit App Running -----------")
 
